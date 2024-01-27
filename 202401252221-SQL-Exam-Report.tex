@@ -173,7 +173,7 @@ for full_table_name, query in all_queries_dict.items():
     print("QUERY\n------\n", query, "\n")
     try:
         # Read the table and print out the names of its columns
-        # Store the DataFrame in a dictionary
+        # Store the Data Frame in a dictionary
         df_table = pd.read_sql(sql=query, con=connection)
         all_queries_dict[full_table_name] = df_table
         (schema_name, table_name) = full_table_name.split('_')
@@ -238,7 +238,7 @@ Vi tittar också på views som redan finns presenterade i den originella databas
 for sch in schemas:
     for view in inspector.get_view_names(schema=sch):
 \end{lstlisting}
-Vi bestämmer oss således för att jämföra köpvanan hos de båda könen och undersöka om vi kan hitta olika mönster i hur män och kvinnor investerar för sin hälsa/ ekonomi, alternativt för en miljövänligare transportmedel. Från de senaste utskrifterna kan vi konstatera att för en rättvis och noggrann jämförelse mellan könen behöver vi tabeller med många kunder i. Därför väljer vi \emph{vIndividualCustomer} och \emph{vPersonDemographics} från schema \emph{Person}. Vi gör en \emph{JOIN} mellan de två tabellerna och får
+Vi bestämmer oss således för att jämföra köpvanan hos de båda könen och undersöka om vi kan hitta olika mönster i hur män och kvinnor investerar i sin hälsa/ ekonomi, alternativt för en miljövänligare transportmedel. Från de senaste utskrifterna kan vi konstatera att för en rättvis och noggrann jämförelse mellan könen behöver vi tabeller med många kunder i. Därför väljer vi \emph{vIndividualCustomer} och \emph{vPersonDemographics} från schema \emph{Person}. Vi gör en \emph{JOIN} mellan de två tabellerna och får
 \begin{lstlisting}
 # SQL query for joining the two tables
 joint_table = f'''
@@ -247,7 +247,7 @@ joint_table = f'''
                 JOIN Sales.vIndividualCustomer AS VIC
                 ON VIC.BusinessEntityID = VPD.BusinessEntityID;
             '''
-# Save the result in a dataframe for further investigation
+# Save the result in a data frame for further investigation
 joint_df = pd.read_sql(sql=joint_table, con=connection)
 print(joint_df.head(5))
 \end{lstlisting}
@@ -281,13 +281,14 @@ print(joint_df)
 
 \subsubsection{Övergång från kategorisk data till ordinal data}
 
-Bortsett från födelsedatum för kunderna är för andra kolumnerna varken omvandlingen eller kategoriseringen lika komplicerade att utföra
+Bortsett från födelsedatum för kunderna är för andra kolumnerna varken omvandlingen eller kategoriseringen lika komplicerade att utföra. Här använder vi \emph{LabelEncoder}  (Cell 322 och 323) till att beräkna företagskunders respektive ålder
+\if(x)
 \begin{lstlisting}
 from sklearn.preprocessing import LabelEncoder
 # Initialize the LabelEncoder
 label_encoder = LabelEncoder()
 \end{lstlisting}
-Här använder vi \emph{LabelEncoder} till att beräkna ålders för företagets kunder
+
 \begin{lstlisting}
 encoded_dates = label_encoder.fit_transform(joint_df['BirthDate'])
 # Convert the encoded dates to strings
@@ -302,38 +303,29 @@ current_year = 1998
 joint_df['Agex'] = current_year - year_from_date
 joint_df['Agex']
 \end{lstlisting}
-För de andra kolumnerna är det som sagt inte like dramatiskt, utan alla följer samma mönster som nedan
+\fi
+För de andra kolumnerna (Cell 326 till 331) är det som sagt inte like dramatiskt utan alla följer samma mönster.
+\if(x)
 \begin{lstlisting}
 joint_df['MaritalStatusx'] = label_encoder.fit_transform(joint_df['MaritalStatus'])
 # Display the mapping of original labels to encoded integers
 label_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
 print("Label Mapping:", label_mapping)
 \end{lstlisting}
+\fi
 
 \section{Analys och slutsatser}
 
 \subsection{Ett första försök: hitta samband mellan Total Purchase YTD och andra faktorer}
 
-Innan vi går vidare med att jämföra \\
-könen, gör vi en analys för att se om \\
-det eventuellt finns något samband \\
-mellan det belopp man spenderat \\
-under det nuvarande året och något \\
-av de relevanta egenskaperna hos \\
-företagets kunder. Vi kan använda \\
-de nya kolumnerna till att beräkna \\
-korrelationen mellan alla dessa \\
-variabler, med hopp om att hitta \\
-variabler som är mer korrelerade \\
-med andra, speciellt de som är \\
-kopplade till kundernas kön.
+Innan vi går vidare med att jämföra könen, gör vi en analys för att se om det eventuellt finns något samband mellan det belopp man spenderat under det nuvarande året och något av de relevanta egenskaperna hos företagets kunder. Vi kan använda de nya kolumnerna till att beräkna korrelationen mellan alla dessa variabler, med hopp om att hitta variabler som är mer korrelerade med andra, speciellt de som är kopplade till kundernas kön.
 
 Från tabellen kan vi endast utläsa vilka par av variabler som är mer korrelerade än andra, nämligen: Agex-Loyaltyx (0.9; detta är framför allt pga vår egen definition of Loyalty), Agex-TotalChildren (0.5), NumberChildren-TotalChildren (0.5), YearlyIncome-NumberCarsOwned (0.5), TotalChildren-Loyaltyx (-0.5), Inga av dessa är relevanta för vår studie och därför överger vi den undersökningen och söker lycka någon annanstans.
 
 Den enda finansiellt relevanta slutsats vi kan dra är att lojalitet är "mot-korrelerad" mot antal barn som i sin tur är korrelerad med ålder. Detta betyder att de äldre tenderar att visa mindre lojalitet, vilket kan förstås i och med att de äldre har fler barn och både har mindre tid att handla och mindre pengar att spendera på egna intressen.
 
 I nästa steg tittar vi på inkomster och försöker hitta ett samband mellan könen och hur mycket de tjänar och spenderar.
-
+\if(x)
 \begin{lstlisting}
 import seaborn as sns
 # Create a correlation matrix to present the relation between all 
@@ -342,12 +334,15 @@ sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".1f")
 plt.title('Correlation Heatmap')
 plt.show()
 \end{lstlisting}
-%correlation_matrix = joint_df[['TotalPurchaseYTD', 'Lengthx', 'Agex', 'Loyaltyx', 
-%					'MaritalStatusx', 'YearlyIncomex', 'Genderx', 
-%					'TotalChildren', 'NumberChildrenAtHome', 
-%					'Educationx', 'Occupationx', 'HomeOwnerFlagx',
-%					'NumberCarsOwned', 'CountryRegionNamex', 
-%					'StateProvinceNamex']].corr()
+\fi
+\if(x)
+correlation_matrix = joint_df[['TotalPurchaseYTD', 'Lengthx', 'Agex', 'Loyaltyx', 
+					'MaritalStatusx', 'YearlyIncomex', 'Genderx', 
+					'TotalChildren', 'NumberChildrenAtHome', 
+					'Educationx', 'Occupationx', 'HomeOwnerFlagx',
+					'NumberCarsOwned', 'CountryRegionNamex', 
+					'StateProvinceNamex']].corr()
+\fi
 \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=north west, inner sep=0pt] at ([xshift=240pt, yshift=-105pt] current page.north west) {\includegraphics[width=300pt]{img_correlation_heatmap.png}};
 \end{tikzpicture}
@@ -355,67 +350,85 @@ plt.show()
 
 \subsection{Första 0-hypotensen: det finns skillnad i inkomst och köpvana hos de ''mest entusiastiska'' männen och kvinnorna}
 
-\begin{lstlisting}
-# Count the number of incomde levels
-expenditure_counts = joint_df['TotalPurchaseYTD'].value_counts()
-print(expenditure_counts)
-\end{lstlisting}
+Cell 334 visar kod som tar reda på exakt hur många olika inkomst värden som finns. Eftersom dessa uppgår till 3994 stycken olika nivåer väljer vi att dela dem i inkomstnivåer; i 30 nivåklasser (bins=30); som det framgår från Cell 335.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{img_boxplot.png}
+    \caption{A caption for the image.}
+\end{figure}
+\if(x)
+\begin{tikzpicture}[baseline=(current bounding box.north)]
+    \node[anchor=north west, inner sep=0pt]  at (0,0) {\includegraphics[width=\textwidth]{img_boxplot.png}};
+\end{tikzpicture}
+\fi
 
-\begin{lstlisting}
-YIx_female = joint_df.loc[joint_df['Gender'] == 'F', 'TotalPurchaseYTD']
-YIx_male = joint_df.loc[joint_df['Gender'] == 'M', 'TotalPurchaseYTD']
-# Plot histograms
-plt.figure(figsize=(15, 6))
-plt.subplot(1, 2, 1)
-plt.hist(YIx_female, bins=30, alpha=0.7, label='Female', color='pink')
-plt.hist(YIx_male, bins=30, alpha=0.7, label='Male', color='blue')
-plt.xlabel('Total Purchase YTD')
-plt.ylabel('Frequency')
-plt.title('Histogram of Total Purchase YTD by Gender')
-plt.legend()
-# Plot boxplots
-plt.subplot(1, 2, 2)
-sns.boxplot(x='Gender', y='TotalPurchaseYTD', data=joint_df, palette={'F': 'pink', 'M': 'blue'})
-plt.xlabel('Gender')
-plt.ylabel('Total Purchase YTD')
-plt.title('Boxplot of Total Purchase YTD by Gender')
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=1in, yshift=-1.22in] current page.north west) {\includegraphics[width=\textwidth]{img_boxplot.png}};
-\end{tikzpicture}\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+%\begin{tikzpicture}[remember picture,overlay]
+%    \node[anchor=north west, inner sep=0pt] at ([xshift=1in, yshift=-1.22in] current page.north west) {\includegraphics[width=\textwidth]{img_boxplot.png}};
+%\end{tikzpicture}\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 I histogrammen ser vi en viss skiftning i kvinnornas totala köp i det föreliggande året jämfört med männens. Även i vår Boxplot ser vi denna skiftning, med extremvärden som ligger längre bort från "boxen" jämfört med schemat för männen. Därför finns det en chans att vi åtminstone kan hitta en 95 procentig signifikant skillnad.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img_gender_total_purchase_ytd.png}
+    \caption{A caption for the image.}
+\end{figure}
+\if(x)
 \begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=2.3in, yshift=-4.4in] current page.north west) {\includegraphics[width=300pt]{img_gender_total_purchase_ytd.png}};
+    \node[anchor=north west, inner sep=0pt] at ([xshift=2.3in, yshift=-4.4in] current page.north west) {\includegraphics[width=0.7\textwidth]{img_gender_total_purchase_ytd.png}};
 \end{tikzpicture}\\\\\\\\
+\fi
+
 Detta betyder att det inte finns någon signifikant skillnad i generella drag mellan hur mycket män och kvinnor spenderar på köp av cykel och tillbehör.
 
 \subsection{Andra 0-hypotensen: det finns en signifikant skillnad mellan könen i den högre ''spenderarklassen''}
 
 Om vi tittar på spridningsdiagrammet för hela populationen, märker vi att de högsta beloppen spenderas av de som är mellan 40 och 55 år gamla.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{img_total_purchase_ytd_agex.png}
+    \caption{A caption for the image.}
+\end{figure}
+\if(x)
 \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=north west, inner sep=0pt] at ([xshift=1in, yshift=-6.3in] current page.north west) {\includegraphics[width=\textwidth]{img_total_purchase_ytd_agex.png}};
 \end{tikzpicture}\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\fi
 Så vi separerar den gruppen som spenderar mer än 5000 dollar per år och tittar på skillnaden mellan män och kvinnor inom den gruppen av kunder.
-
-\newpage
-
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{img_spenderarklassen.png}
+    \caption{A caption for the image.}
+\end{figure}
+\if(x)
 \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=north west, inner sep=0pt] at ([xshift=1.5in, yshift=-1in] current page.north west) {\includegraphics[width=0.8\textwidth]{img_spenderarklassen.png}};
 \end{tikzpicture}\\\\\\\\
+\fi
 Vi finner återigen ingen signifikant skillnad mellan dessa värden.
 
 \subsection{Tredje 0-hypotensen: det finns en signifikant skillnad i köpvana mellan kvinnor och män i de olika inkomstklasserna}
 
-Efter att inte ha lyckats med att hitta någon skillnad mellan de från båda könen som spenderar mest på köp av cyklar och tillbehör, gör vi ett försök med att se om det förekommer någon signifikant skillnad i hur mycket män och kvinnor i varje inkomstklass\\\\\\\\\\\\\\
+Efter att inte ha lyckats med att hitta någon skillnad mellan de från båda könen som spenderar mest på köp av cyklar och tillbehör, gör vi ett försök med att se om det förekommer någon signifikant skillnad i hur mycket män och kvinnor i varje inkomstklass.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img_income_classes.png}
+    \caption{A caption for the image.}
+\end{figure}
+\if(x)
 \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=north west, inner sep=0pt] at ([xshift=2in, yshift=-3in] current page.north west) {\includegraphics[width=0.7\textwidth]{img_income_classes.png}};
 \end{tikzpicture}
-spenderar på sin hobby iår.\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\fi
+spenderar på sin hobby iår.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{img_shopping_habbit_for_income_classes.png}
+    \caption{A caption for the image.}
+\end{figure}
+\if(x)
 \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=north west, inner sep=0pt] at ([xshift=1in, yshift=-4.1in] current page.north west) {\includegraphics[width=\textwidth]{img_shopping_habbit_for_income_classes.png}};
 \end{tikzpicture}
+\fi
 Även här hittar vi alltså ingen signifikant skillnad mellan män och kvinnors köpvana, när det kommer till cykel och tillbehör.
 
 \section{Conclusion}
