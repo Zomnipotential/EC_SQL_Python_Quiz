@@ -66,6 +66,7 @@ INNER JOIN, å andra sidan, fyller den nya tabellen med de rader där både \\
 den första och den andra tabellen har information att tillföra. För de rader \\
 där den ena eller den andra inte innehåller någon information kommer \\
 ingen ny rad att skapas i den nya tabellen heller.
+
 \begin{tikzpicture}[remember picture,overlay]
     \node[anchor=north west, inner sep=0pt] at ([xshift=420pt, yshift=-390pt] current page.north west) {\includegraphics[width=120pt]{img_venn_diagram.png}};
 \end{tikzpicture}
@@ -128,37 +129,24 @@ Databasen AdventureWork2022 är en fiktiv databas för att uppvisa Microsoft's m
 
 Det finns data om 296 anställda varav 290 jobbar kvar, 13 jobbkandidater, 181 försäljningsregioner, 1764 produkter, 6 cykelmodeller, 104 försäljningsställe med 156 kontaktpersoner, 19972 kunder och 17 säljare.
 
-\subsubsection{Installation av programvara}
+\subsubsection{Installation av programvara och import av bibliotek och moduler}
 
-\begin{lstlisting}
-!pip install sqlalchemy
-!pip install pyodbc
-!pip install --upgrade pyodbc
-
-from sqlalchemy import create_engine, MetaData, Table, inspect
-import pandas as pd
-# to show the whole width and length of the tables
-pd.set_option('display.max_columns', None)
-pd.reset_option('display.max_rows')
-pd.reset_option('display.max_columns')
-\end{lstlisting}
+Förutom installation av \textbf{sqlalchemy} behövde vi importera \textbf{matplotlib.pyplot}, \emph{venn2} från \textbf{matplotlib\_venn}, \textbf{pandas}, \emph{LabelEncoder} from \textbf{sklearn.preprocessing}, \emph{datetime} från \textbf{datetime}, \textbf{seaborn}, \textbf{numpy}, \emph{stats} från \textbf{scipy}, samt \emph{sm} från \textbf{statsmodels.api}.
 
 \subsubsection{Databas, uppkoppling och åtkomst}
 
-Detta har redan diskuterats och behöver inte redovisas. Dock är bra att påpeka att vår \emph{engine} har vi använt parametervärdena 'mssql', 'DESKTOP-PJ0B80O', 'AdventureWorks2022', och integrated\_security=True.
+Detta har redan diskuterats och behöver inte redovisas. Dock är det bra att påpeka att till vår \emph{engine} har vi använt parametervärdena 'mssql', 'DESKTOP-PJ0B80O', 'AdventureWorks2022', och integrated\_security=True.
 
-\subsubsection{Förberedelse av scheman and tabeller}
+\subsubsection{Förberedelse av scheman och tabeller}
  
  Detta är också redan diskuterat och behöver inte tas upp här.
 
 \subsubsection{Databas förfrågan (Queries)}
 
-Vi försöker först med att ta en snabb titt på alla tabeller i databasen.
+Vi försöker först med att ta en snabb titt på alla tabeller i databasen (Cell ........).
+\if(x)
 \begin{lstlisting}
-# Find the name of all the tables in the database within each schema
-# Create a dictionary to store queries and results
-all_queries_dict = {}
-for sch in schemas:
+...
     for table in inspector.get_table_names(schema=sch):
         if sch != 'dbo':
             # Get the names of all the tables in each schema and
@@ -167,33 +155,15 @@ for sch in schemas:
             			      inspector.get_columns(table_name=table, schema=sch))
             full_table_name = f"{sch}_{table}"
             query = f"SELECT {col_names} FROM {sch}.{table}"
-            all_queries_dict[full_table_name] = query
-# Put the queries in action and print the results one by one
-for full_table_name, query in all_queries_dict.items():
-    print("QUERY\n------\n", query, "\n")
-    try:
-        # Read the table and print out the names of its columns
-        # Store the Data Frame in a dictionary
-        df_table = pd.read_sql(sql=query, con=connection)
-        all_queries_dict[full_table_name] = df_table
-        (schema_name, table_name) = full_table_name.split('_')
-        print("******************************************************************")
-        print(f"Schema: {schema_name}\nTable: {table_name}\n")
-        # Print 5 first rows of the table at hand and some of its basic statistics
-        print(df_table.head(5))
-        print("******************************************************************")
-        print(df_table.describe())
-        print("******************************************************************")
-    except Exception as e:
-        print(f"Error executing query: {e}")
-    print("\n"*3)
+            ...
 \end{lstlisting}
-Resultatet blir en beskrivning av alla tabeller i databasen, vad vi har använt för \emph{Query}, de första fem raderna i tabellen och lite statistik över just den tabellen.
+\fi
+Resultatet blir en beskrivning av alla tabeller i databasen, vad vi har använt för \emph{Query}, de första fem raderna i tabellen och lite statistik över just den tabellen (Cell .........).
+\if(x)
 \begin{lstlisting}
 QUERY
 ------
  SELECT DepartmentID, Name, GroupName, ModifiedDate FROM HumanResources.Department 
-
 *************************************************************************
 Schema: HumanResources
 Table: Department
@@ -208,37 +178,46 @@ Table: Department
        DepartmentID         ModifiedDate
 count     16.000000                   16
 mean       8.500000  2008-04-30 00:00:00
-min        1.000000  2008-04-30 00:00:00
-25%        4.750000  2008-04-30 00:00:00
-50%        8.500000  2008-04-30 00:00:00
-75%       12.250000  2008-04-30 00:00:00
-max       16.000000  2008-04-30 00:00:00
-std        4.760952                  NaN
-**********************************************
+min        1.000000  2008-04-30 00:00:00	75%       12.250000  2008-04-30 00:00:00
+25%        4.750000  2008-04-30 00:00:00	max       16.000000  2008-04-30 00:00:00
+50%        8.500000  2008-04-30 00:00:00	std        4.760952                  NaN
 \end{lstlisting}
-Vi noterar att schemas Person och Sales innehåller \\
-mycket information som är relaterade till företagets  \\
-kunder. Detta väljer vi som ämne för vår analys och  \\
-framställer samma tabeller ännu en gång för att  \\
-lättare undersöka sambanden mellan tabeller som \\ 
-innehåller all information om kunderna. Koden  \\
-skiljer sig inte annat än att vi bara väljer de tabeller \\ 
-som tillhör schemas Persona och Sales.
-\begin{lstlisting}
-if sch == 'Person' or sch == 'Sales':
-\end{lstlisting}
-Sedan att vi får en hel del tabeller som egentligen inte kommer till någon användning är något vi kan försumma när det kommer till automatisk utvinning of information, trots att det minskar överskådligheten. Detta eftersom vi ritar grafer för alla kolumner i alla tabeller, istället för att välja ut ''rätt'' kolumn, vilket skulle kräva mer analytisk kodskrivning genom t ex regex-uttryck.
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=305pt, yshift=-300pt] current page.north west) {\includegraphics[width=240pt]{img_order_quantity.png}};
-\end{tikzpicture}
-Det var först här som vi noterade att det finns många egenskaper hos kunderna som skulle kunna undersökas närmare för att se ett mönster.
+\fi
 
-Vi tittar också på views som redan finns presenterade i den originella databasen och speciellt där kunderna är uppradade. Den största skillnaden mot tidigare koder är
+Vi noterar att schemas \emph{Person} och \emph{Sales} innehåller mycket information som är relaterade till företagets kunder. Detta väljer vi som ämne för vår analys och framställer samma tabeller ännu en gång för att lättare undersöka sambanden mellan tabeller som innehåller all information om kunderna. Koden skiljer sig inte annat än att vi bara väljer de tabeller som tillhör schemas Persona och Sales (Cell .......).
+\if(x)
 \begin{lstlisting}
-for sch in schemas:
-    for view in inspector.get_view_names(schema=sch):
+...
+    if sch == 'Person' or sch == 'Sales':
+	    ...
 \end{lstlisting}
-Vi bestämmer oss således för att jämföra köpvanan hos de båda könen och undersöka om vi kan hitta olika mönster i hur män och kvinnor investerar i sin hälsa/ ekonomi, alternativt för en miljövänligare transportmedel. Från de senaste utskrifterna kan vi konstatera att för en rättvis och noggrann jämförelse mellan könen behöver vi tabeller med många kunder i. Därför väljer vi \emph{vIndividualCustomer} och \emph{vPersonDemographics} från schema \emph{Person}. Vi gör en \emph{JOIN} mellan de två tabellerna och får
+\fi
+
+Sedan att vi får en hel del tabeller som egentligen inte kommer till någon användning är något vi kan försumma när det kommer till automatisk utvinning of information, trots att det minskar överskådligheten. Detta eftersom vi ritar grafer för alla kolumner i alla tabeller, istället för att välja ut ''rätt'' kolumn, vilket skulle kräva mer analytisk kodskrivning genom t ex regex-uttryck (Cell ......... refer to figures).
+\if(x)
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img_order_quantity.png}
+    \caption{Order Quantity.}
+\end{figure}
+
+\begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west, inner sep=0pt] at ([xshift=5pt, yshift=-300pt] current page.north west) {\includegraphics[width=240pt]{img_order_quantity.png}};
+\end{tikzpicture}
+\fi
+
+Det var först här som vi noterade att det finns många egenskaper hos kunderna som skulle kunna undersökas närmare för att se ett mönster. Vi tittar också på views som redan finns presenterade i den originella databasen och speciellt där kunderna är uppradade. Den största skillnaden mot tidigare koder är att vi istället använder \emph{inspector.get\_view\_names} (Cell ........)
+\if(x)
+\begin{lstlisting}
+...
+    for sch in schemas:
+        for view in inspector.get_view_names(schema=sch):
+            ...
+\end{lstlisting}
+\fi
+
+Vi bestämmer oss således för att jämföra köpvanan hos kvinnor och män och undersöka om vi kan hitta olika mönster i hur män och kvinnor investerar i sin hälsa/ ekonomi, alternativt för en miljövänligare transportmedel. Från de senaste utskrifterna kan vi konstatera att för en rättvis och noggrann jämförelse mellan könen behöver vi tabeller med många kunder i. Därför väljer vi \emph{vIndividualCustomer} och \emph{vPersonDemographics} från schema \emph{Person}. Vi gör en \emph{JOIN} mellan de två tabellerna och får (Cell ............)
+\if(x)
 \begin{lstlisting}
 # SQL query for joining the two tables
 joint_table = f'''
@@ -251,15 +230,31 @@ joint_table = f'''
 joint_df = pd.read_sql(sql=joint_table, con=connection)
 print(joint_df.head(5))
 \end{lstlisting}
-Vi gör en klassificering av data i kolumnen för årsinkomst och får att:
+\fi
+
+Vi gör en klassificering av data i kolumnen för årsinkomst och får
+\if(x)
 \begin{lstlisting}
 # Count the number of incomes on each income level
 income_counts = joint_df['YearlyIncome'].value_counts()
 print(income_counts)
 \end{lstlisting}
+\fi
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.25\textwidth]{img_yearly_income.png}
+%    \caption{Yearly Income}
+\end{figure}
+
+\if(x)
 \begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=410pt, yshift=-520pt] current page.north west) {\includegraphics[width=120pt]{img_yearly_income.png}};
+    \node[anchor=north west, inner sep=0pt] at ([xshift=400pt, yshift=-9.0in] current page.north west) {\includegraphics[width=120pt]{img_yearly_income.png}};
 \end{tikzpicture}
+\fi
+
+
+
 För att kunna använda denna kolumn i våra statistiska beräkningar ersätter vi varje intervall med dess max-gräns, dvs:
 \begin{itemize}[topsep=10pt, partopsep=0pt, itemsep=0.2em, parsep=0pt]
 	\item[] 0-25000 with \textbf{25,000}
@@ -268,51 +263,11 @@ För att kunna använda denna kolumn i våra statistiska beräkningar ersätter 
 	\item[] 75001-100000 with \textbf{100,000}
 	\item[] greater than 100000 with \textbf{500,000}
 \end{itemize}
-för att göra talen i kolumnerna konvertibla till heltal inför nästa steg, som är att skapa en korrelationsmatris. Vi kommer inte att använda själva talen i våra beräkningar så det finns ingen risk att våra beräkningar genererar felaktiga resultat. Med andra ord använder vi årsinkomsten endast som en ordinal, kategorisk variabel.
-\begin{lstlisting}
-# Make a regex to differentiate between the 'nnnnn-nnnnn' and 'greater then 100000'
-pattern = r'-(\d+)| (\d+)'
-# Apply the regex pattern on all the cells, remove NaN and convert the result to int
-matches = joint_df['YearlyIncome'].str.extract(pattern).fillna(0).astype(int)
-# Use the apply function to find the maximum value for each row and save it in a new column
-joint_df['YearlyIncomex'] = matches.apply(lambda row: max(row[0], row[1]*5), axis=1)
-print(joint_df)
-\end{lstlisting}
+för att göra talen i kolumnerna konvertibla till heltal inför nästa steg som är att skapa en korrelationsmatris. Vi kommer inte att använda själva talen i våra beräkningar så det finns ingen risk att våra beräkningar genererar felaktiga resultat. Med andra ord använder vi årsinkomsten endast som en ordinal, kategorisk variabel. (Cell pattern = r'-(\d+)| (\d+)')
 
 \subsubsection{Övergång från kategorisk data till ordinal data}
 
-Bortsett från födelsedatum för kunderna är för andra kolumnerna varken omvandlingen eller kategoriseringen lika komplicerade att utföra. Här använder vi \emph{LabelEncoder}  (Cell 322 och 323) till att beräkna företagskunders respektive ålder
-\if(x)
-\begin{lstlisting}
-from sklearn.preprocessing import LabelEncoder
-# Initialize the LabelEncoder
-label_encoder = LabelEncoder()
-\end{lstlisting}
-
-\begin{lstlisting}
-encoded_dates = label_encoder.fit_transform(joint_df['BirthDate'])
-# Convert the encoded dates to strings
-date_strings = joint_df['BirthDate'].astype(str)
-# Extract the first four characters (digits) from each date
-year = date_strings.str[:4]
-year_from_date = pd.to_numeric(year)
-# Calculate the interval between the year from date and the current year
-# Choosing 1998 as the current year gives a time span of 18 through 88,
-# which sounds more reasonable than any other end date
-current_year = 1998
-joint_df['Agex'] = current_year - year_from_date
-joint_df['Agex']
-\end{lstlisting}
-\fi
-För de andra kolumnerna (Cell 326 till 331) är det som sagt inte like dramatiskt utan alla följer samma mönster.
-\if(x)
-\begin{lstlisting}
-joint_df['MaritalStatusx'] = label_encoder.fit_transform(joint_df['MaritalStatus'])
-# Display the mapping of original labels to encoded integers
-label_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
-print("Label Mapping:", label_mapping)
-\end{lstlisting}
-\fi
+Bortsett från födelsedatum för kunderna är varken omvandlingen eller kategoriseringen lika komplicerade att utföra för de andra kolumnerna. Här använder vi \emph{LabelEncoder}  (Cell 322 och 323) till att beräkna företagskunders respektive ålder. För de andra kolumnerna (Cell 326 till 331) är det som sagt inte like dramatiskt utan alla följer samma mönster.
 
 \section{Analys och slutsatser}
 
@@ -324,60 +279,43 @@ Från tabellen kan vi endast utläsa vilka par av variabler som är mer korreler
 
 Den enda finansiellt relevanta slutsats vi kan dra är att lojalitet är "mot-korrelerad" mot antal barn som i sin tur är korrelerad med ålder. Detta betyder att de äldre tenderar att visa mindre lojalitet, vilket kan förstås i och med att de äldre har fler barn och både har mindre tid att handla och mindre pengar att spendera på egna intressen.
 
-I nästa steg tittar vi på inkomster och försöker hitta ett samband mellan könen och hur mycket de tjänar och spenderar.
+I nästa steg tittar vi på inkomster och försöker hitta ett samband mellan könen och hur mycket de tjänar och spenderar. Eftersom den figuren inte tillför så mycket information lägger vi den inte till här. (Cell ........)
+% The figure is on the top of the next page
 \if(x)
-\begin{lstlisting}
-import seaborn as sns
-# Create a correlation matrix to present the relation between all 
-correlation_matrix = joint_df[['TotalPurchaseYTD', 'Lengthx', 'Agex', ...]].corr()
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".1f")
-plt.title('Correlation Heatmap')
-plt.show()
-\end{lstlisting}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img_correlation_heatmap.png}
+    \caption{Correlation HeatMap}
+\end{figure}
 \fi
-\if(x)
-correlation_matrix = joint_df[['TotalPurchaseYTD', 'Lengthx', 'Agex', 'Loyaltyx', 
-					'MaritalStatusx', 'YearlyIncomex', 'Genderx', 
-					'TotalChildren', 'NumberChildrenAtHome', 
-					'Educationx', 'Occupationx', 'HomeOwnerFlagx',
-					'NumberCarsOwned', 'CountryRegionNamex', 
-					'StateProvinceNamex']].corr()
-\fi
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=240pt, yshift=-105pt] current page.north west) {\includegraphics[width=300pt]{img_correlation_heatmap.png}};
-\end{tikzpicture}
+
+
+
+
+
 
 
 \subsection{Första 0-hypotensen: det finns skillnad i inkomst och köpvana hos de ''mest entusiastiska'' männen och kvinnorna}
 
-Cell 334 visar kod som tar reda på exakt hur många olika inkomst värden som finns. Eftersom dessa uppgår till 3994 stycken olika nivåer väljer vi att dela dem i inkomstnivåer; i 30 nivåklasser (bins=30); som det framgår från Cell 335.
+Cell 334 visar kod som tar reda på exakt hur många olika inkomster som finns. Eftersom dessa uppgår till 3994 stycken olika värden väljer vi att dela dem i inkomstnivåer; i 30 nivåklasser (bins=30); som det framgår från Cell 335. I histogrammen på nästa sida ser vi en viss skiftning i kvinnornas totala köp i det föreliggande året jämfört med männens. Även i vår Boxplot ser vi denna skiftning, med extremvärden som ligger längre bort från "boxen" jämfört med schemat för männen. Därför finns det en chans att vi åtminstone kan hitta en 95 procentig signifikant skillnad.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{img_boxplot.png}
-    \caption{A caption for the image.}
+    \includegraphics[width=0.98\textwidth]{img_boxplot.png}
+%    \caption{Boxplot.}
 \end{figure}
-\if(x)
-\begin{tikzpicture}[baseline=(current bounding box.north)]
-    \node[anchor=north west, inner sep=0pt]  at (0,0) {\includegraphics[width=\textwidth]{img_boxplot.png}};
-\end{tikzpicture}
-\fi
-
-%\begin{tikzpicture}[remember picture,overlay]
-%    \node[anchor=north west, inner sep=0pt] at ([xshift=1in, yshift=-1.22in] current page.north west) {\includegraphics[width=\textwidth]{img_boxplot.png}};
-%\end{tikzpicture}\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-I histogrammen ser vi en viss skiftning i kvinnornas totala köp i det föreliggande året jämfört med männens. Även i vår Boxplot ser vi denna skiftning, med extremvärden som ligger längre bort från "boxen" jämfört med schemat för männen. Därför finns det en chans att vi åtminstone kan hitta en 95 procentig signifikant skillnad.
+Detta betyder att det inte finns någon signifikant skillnad i generella drag mellan hur mycket män och kvinnor spenderar på köp av cykel och tillbehör.
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.6\textwidth]{img_gender_total_purchase_ytd.png}
-    \caption{A caption for the image.}
+    \caption{Gender TotalPurchaseYTD.}
 \end{figure}
-\if(x)
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=2.3in, yshift=-4.4in] current page.north west) {\includegraphics[width=0.7\textwidth]{img_gender_total_purchase_ytd.png}};
-\end{tikzpicture}\\\\\\\\
-\fi
 
-Detta betyder att det inte finns någon signifikant skillnad i generella drag mellan hur mycket män och kvinnor spenderar på köp av cykel och tillbehör.
+
+
+
+
+
+
 
 \subsection{Andra 0-hypotensen: det finns en signifikant skillnad mellan könen i den högre ''spenderarklassen''}
 
@@ -385,25 +323,22 @@ Om vi tittar på spridningsdiagrammet för hela populationen, märker vi att de 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{img_total_purchase_ytd_agex.png}
-    \caption{A caption for the image.}
+    \caption{TotalPurchaseYTD agex}
 \end{figure}
-\if(x)
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=1in, yshift=-6.3in] current page.north west) {\includegraphics[width=\textwidth]{img_total_purchase_ytd_agex.png}};
-\end{tikzpicture}\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\fi
 Så vi separerar den gruppen som spenderar mer än 5000 dollar per år och tittar på skillnaden mellan män och kvinnor inom den gruppen av kunder.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{img_spenderarklassen.png}
-    \caption{A caption for the image.}
+    \includegraphics[width=0.8\textwidth]{img_spenderarklassen.png}
+%    \caption{Spenderarklassen.}
 \end{figure}
-\if(x)
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=1.5in, yshift=-1in] current page.north west) {\includegraphics[width=0.8\textwidth]{img_spenderarklassen.png}};
-\end{tikzpicture}\\\\\\\\
-\fi
 Vi finner återigen ingen signifikant skillnad mellan dessa värden.
+
+
+
+
+
+
+
 
 \subsection{Tredje 0-hypotensen: det finns en signifikant skillnad i köpvana mellan kvinnor och män i de olika inkomstklasserna}
 
@@ -411,24 +346,16 @@ Efter att inte ha lyckats med att hitta någon skillnad mellan de från båda k�
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.7\textwidth]{img_income_classes.png}
-    \caption{A caption for the image.}
+    \caption{Income Classes.}
 \end{figure}
-\if(x)
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=2in, yshift=-3in] current page.north west) {\includegraphics[width=0.7\textwidth]{img_income_classes.png}};
-\end{tikzpicture}
-\fi
+
 spenderar på sin hobby iår.
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{img_shopping_habbit_for_income_classes.png}
-    \caption{A caption for the image.}
+    \caption{Shopping habbit for Income Classes.}
 \end{figure}
-\if(x)
-\begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west, inner sep=0pt] at ([xshift=1in, yshift=-4.1in] current page.north west) {\includegraphics[width=\textwidth]{img_shopping_habbit_for_income_classes.png}};
-\end{tikzpicture}
-\fi
+
 Även här hittar vi alltså ingen signifikant skillnad mellan män och kvinnors köpvana, när det kommer till cykel och tillbehör.
 
 \section{Conclusion}
