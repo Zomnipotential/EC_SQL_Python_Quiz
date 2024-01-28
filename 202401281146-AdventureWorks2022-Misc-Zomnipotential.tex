@@ -1,0 +1,70 @@
+\documentclass[10pt]{article}
+
+% For text sizes
+\usepackage[left=1in,right=1in,top=0.9in,bottom=0.9in]{geometry}
+
+% For figures
+\usepackage{graphicx}
+\usepackage{tikz}
+
+% For vertical space between items
+\usepackage{enumitem}
+
+% Used to show Python code 'verbatim'
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{keywords}{RGB}{255,0,90}
+\definecolor{comments}{RGB}{0,0,113}
+\definecolor{red}{RGB}{160,0,0}
+\definecolor{green}{RGB}{0,150,0}
+
+% For href
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=red,
+    citecolor=green,
+    urlbordercolor={0 0 1},
+}
+
+\begin{document}
+
+% Used to show Python code 'verbatim'
+\lstset{language=Python, 
+        basicstyle=\ttfamily\footnotesize, 
+        keywordstyle=\color{keywords},
+        commentstyle=\color{green},
+        stringstyle=\color{red},
+        showstringspaces=false,
+        identifierstyle=\color{comments},
+        keywords=[2]{pow},
+        keywordstyle=[2]{\color{orange}},
+}
+% Python code illustration ends here
+
+\title{Python för Hantering av SQL Queries}
+\author{Matthew H. Motallebipour}
+\date{\today}
+\maketitle
+
+\section{Utmaningarna}
+
+Att försöka hitta den optimala frågan som skulle resultera i ett mönster som man kan dra slutsatser ifrån är nog det som ställer till det för vilken data scientist som helst. Och det var det som jag råkade ut för: just att min frågeställning inte kom fram till resultat som skulle ge konkreta förändringar i åtgärder för en ökad försäljning. Men det, i sin tur, försäkrar företagaren att just könsfördelning är inget att ''bekymra sig'' över. Så på det sättet har vi egentligen eliminerat ett problem och vi kan gå vidare till andra kategorier.
+
+\section{Betyg}
+
+Om jag vore läraren till denna kurs skulle jag hänsynslös sätta det lägsta betyget för godkänt på detta arbete. Annars är innehållet, mtp omfattningen och användandet av Python och Queries samt utformningen av rapporten och analysen av det genomförda arbetet inte värt bara det lägsta möjliga.
+
+\section{Tips till mig själv}
+
+\begin{itemize}
+	\item Skriva rapporten samtidigt som jag utför arbetet och analysen för att hinna färdigställa rapporten tidigare, skulle vara det absolut första. Det har jag gjort tidigare och vet att det genererar snabbare resultat.
+	\item Söka på nätet och använda andras arbete och tips om vad som kan hittas i just den databasen eller andra liknande, både fiktiva och reella, databaser.
+\end{itemize}
+
+\noindent Det finns säkert många andra tips att ge mig själv men eftersom jag inte är en fullfjädrad data scientist har jag inte den översynen än.\\
+
+\noindent Tack för en givande kurs!
+
+\end{document}
